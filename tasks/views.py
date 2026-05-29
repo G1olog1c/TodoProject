@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.contrib.auth.forms import UserCreationForm
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -60,3 +61,10 @@ def toggle_task(request, pk):
     task.is_done = not task.is_done
     task.save()
     return redirect('task_list')
+
+class SignUpView(CreateView):
+    """User registration view using Django's built-in form."""
+
+    form_class = UserCreationForm
+    template_name = 'registration/signup.html'
+    success_url = reverse_lazy('login')

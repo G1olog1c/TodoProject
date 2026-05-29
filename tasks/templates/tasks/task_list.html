@@ -1,0 +1,36 @@
+{% extends 'tasks/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Twoje zadania</h1>
+    <a href="{% url 'task_create' %}" class="btn btn-success">+ Nowe zadanie</a>
+</div>
+
+{% if tasks %}
+    <div class="list-group">
+        {% for task in tasks %}
+            <div class="list-group-item d-flex justify-content-between align-items-center
+                        {% if task.is_done %}list-group-item-success{% endif %}">
+                <div>
+                    <h5 class="mb-1 {% if task.is_done %}text-decoration-line-through{% endif %}">
+                        {{ task.title }}
+                    </h5>
+                    {% if task.description %}
+                        <p class="mb-1 text-muted">{{ task.description }}</p>
+                    {% endif %}
+                    <small class="text-muted">Utworzono: {{ task.created_at|date:"d.m.Y H:i" }}</small>
+                </div>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'task_toggle' task.pk %}" class="btn btn-sm btn-outline-primary">
+                        {% if task.is_done %}Cofnij{% else %}Wykonane{% endif %}
+                    </a>
+                    <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-outline-secondary">Edytuj</a>
+                    <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">Usuń</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">Nie masz jeszcze żadnych zadań. Dodaj pierwsze!</div>
+{% endif %}
+{% endblock %}
