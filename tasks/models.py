@@ -48,3 +48,18 @@ class Task(models.Model):
         if self.due_date and not self.is_done:
             return self.due_date < timezone.localdate()
         return False
+
+    @property
+    def due_status(self):
+        """Return CSS class hint for the due date: overdue/today/soon/none."""
+        if not self.due_date or self.is_done:
+            return ''
+        today = timezone.localdate()
+        delta = (self.due_date - today).days
+        if delta < 0:
+            return 'overdue'
+        if delta == 0:
+            return 'today'
+        if delta <= 2:
+            return 'soon'
+        return ''

@@ -2,65 +2,204 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Twoje zadania</h1>
-    <a href="{% url 'task_create' %}" class="btn btn-success">+ Nowe zadanie</a>
+    <h1><i class="bi bi-check2-square"></i> Twoje zadania</h1>
+    <a href="{% url 'task_create' %}" class="btn btn-success">
+        <i class="bi bi-plus-lg"></i> Nowe zadanie
+    </a>
 </div>
 
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" class="form-control"
+               placeholder="Szukaj w tytule lub opisie..."
+               value="{{ search_query }}">
+        {% if current_filter != 'all' %}
+            <input type="hidden" name="filter" value="{{ current_filter }}">
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Szukaj</button>
+        {% if search_query %}
+            <a href="?filter={{ current_filter }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        {% endif %}
+    </div>
+</form>
+
 <div class="btn-group mb-3" role="group">
-    <a href="?filter=all"
+    <a href="?filter=all{% if search_query %}&q={{ search_query }}{% endif %}"
        class="btn btn-outline-primary {% if current_filter == 'all' %}active{% endif %}">
-        Wszystkie
+        Wszystkie <span class="badge bg-secondary">{{ count_all }}</span>
     </a>
-    <a href="?filter=active"
+    <a href="?filter=active{% if search_query %}&q={{ search_query }}{% endif %}"
        class="btn btn-outline-primary {% if current_filter == 'active' %}active{% endif %}">
-        Aktywne
+        Aktywne <span class="badge bg-primary">{{ count_active }}</span>
     </a>
-    <a href="?filter=done"
+    <a href="?filter=done{% if search_query %}&q={{ search_query }}{% endif %}"
        class="btn btn-outline-primary {% if current_filter == 'done' %}active{% endif %}">
-        Wykonane
+        Wykonane <span class="badge bg-success">{{ count_done }}</span>
     </a>
 </div>
 
 {% if tasks %}
-    <div class="list-group">
+    <table class="table table-hover align-middle bg-white shadow-sm">
+        <thead class="table-light">
+        <tr>
+            <th style="width:40px;"></th>
+            <th>
+                <a href="?sort={% if current_sort == 'title' %}-title{% else %}title{% endif %}{% if current_filter != 'all' %}&filter={{ current_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="text-decoration-none text-dark">
+                    Tytuł
+                    {% if current_sort == 'title' %}<i class="bi bi-caret-up-fill"></i>
+                    {% elif current_sort == '-title' %}<i class="bi bi-caret-down-fill"></i>
+                    {% else %}<i class="bi bi-arrow-down-up text-muted small"></i>{% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?sort={% if current_sort == 'priority' %}-priority{% else %}priority{% endif %}{% if current_filter != 'all' %}&filter={{ current_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="text-decoration-none text-dark">
+                    Priorytet
+                    {% if current_sort == 'priority' %}<i class="bi bi-caret-up-fill"></i>
+                    {% elif current_sort == '-priority' %}<i class="bi bi-caret-down-fill"></i>
+                    {% else %}<i class="bi bi-arrow-down-up text-muted small"></i>{% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?sort={% if current_sort == 'due_date' %}-due_date{% else %}due_date{% endif %}{% if current_filter != 'all' %}&filter={{ current_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="text-decoration-none text-dark">
+                    Termin
+                    {% if current_sort == 'due_date' %}<i class="bi bi-caret-up-fill"></i>
+                    {% elif current_sort == '-due_date' %}<i class="bi bi-caret-down-fill"></i>
+                    {% else %}<i class="bi bi-arrow-down-up text-muted small"></i>{% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?sort={% if current_sort == 'created_at' %}-created_at{% else %}created_at{% endif %}{% if current_filter != 'all' %}&filter={{ current_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="text-decoration-none text-dark">
+                    Utworzono
+                    {% if current_sort == 'created_at' %}<i class="bi bi-caret-up-fill"></i>
+                    {% elif current_sort == '-created_at' %}<i class="bi bi-caret-down-fill"></i>
+                    {% else %}<i class="bi bi-arrow-down-up text-muted small"></i>{% endif %}
+                </a>
+            </th>
+            <th style="width:160px;"></th>
+        </tr>
+        </thead>
+        <tbody>
         {% for task in tasks %}
-            <div class="list-group-item d-flex justify-content-between align-items-center
-                        {% if task.is_done %}list-group-item-success{% endif %}">
-                <div>
-                    <h5 class="mb-1 {% if task.is_done %}text-decoration-line-through{% endif %}">
+            <tr data-task-id="{{ task.pk }}" class="task-row {% if task.is_done %}table-success{% endif %} due-{{ task.due_status }}">
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input toggle-checkbox"
+                           data-task-id="{{ task.pk }}"
+                           {% if task.is_done %}checked{% endif %}>
+                </td>
+                <td>
+                    <span class="task-title {% if task.is_done %}text-decoration-line-through text-muted{% endif %}">
                         {{ task.title }}
-                        {% if task.priority == 'H' %}
-                            <span class="badge bg-danger ms-2">Wysoki</span>
-                        {% elif task.priority == 'M' %}
-                            <span class="badge bg-warning text-dark ms-2">Średni</span>
-                        {% else %}
-                            <span class="badge bg-secondary ms-2">Niski</span>
-                        {% endif %}
-                        {% if task.is_overdue %}
-                            <span class="badge bg-dark ms-1">Przeterminowane</span>
-                        {% endif %}
-                    </h5>
+                    </span>
                     {% if task.description %}
-                        <p class="mb-1 text-muted">{{ task.description }}</p>
+                        <div class="small text-muted">{{ task.description|truncatechars:60 }}</div>
                     {% endif %}
-                    <small class="text-muted">
-                        Utworzono: {{ task.created_at|date:"d.m.Y H:i" }}
-                        {% if task.due_date %}
-                            &nbsp;|&nbsp; Termin: <strong>{{ task.due_date|date:"d.m.Y" }}</strong>
+                </td>
+                <td>
+                    {% if task.priority == 'H' %}
+                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Wysoki</span>
+                    {% elif task.priority == 'M' %}
+                        <span class="badge bg-warning text-dark">Średni</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Niski</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if task.due_date %}
+                        {% if task.due_status == 'overdue' %}
+                            <span class="text-danger fw-bold">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                {{ task.due_date|date:"d.m.Y" }}
+                            </span>
+                        {% elif task.due_status == 'today' %}
+                            <span class="text-warning fw-bold">
+                                <i class="bi bi-clock-fill"></i> Dziś
+                            </span>
+                        {% elif task.due_status == 'soon' %}
+                            <span class="text-warning">
+                                {{ task.due_date|date:"d.m.Y" }}
+                            </span>
+                        {% else %}
+                            {{ task.due_date|date:"d.m.Y" }}
                         {% endif %}
-                    </small>
-                </div>
-                <div class="btn-group" role="group">
-                    <a href="{% url 'task_toggle' task.pk %}" class="btn btn-sm btn-outline-primary">
-                        {% if task.is_done %}Cofnij{% else %}Wykonane{% endif %}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="text-muted small">{{ task.created_at|date:"d.m.Y H:i" }}</td>
+                <td class="text-end">
+                    <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-outline-secondary" title="Edytuj">
+                        <i class="bi bi-pencil"></i>
                     </a>
-                    <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-outline-secondary">Edytuj</a>
-                    <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">Usuń</a>
-                </div>
-            </div>
+                    <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-outline-danger" title="Usuń">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
+            </tr>
         {% endfor %}
-    </div>
+        </tbody>
+    </table>
 {% else %}
-    <div class="alert alert-info">Brak zadań do wyświetlenia.</div>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        {% if search_query %}
+            Brak wyników dla "{{ search_query }}".
+        {% else %}
+            Brak zadań do wyświetlenia.
+        {% endif %}
+    </div>
 {% endif %}
+
+<style>
+    .due-overdue { background-color: #fff5f5; }
+    .due-today { background-color: #fffbea; }
+    .due-soon { background-color: #fffef0; }
+    th a:hover { color: #0d6efd !important; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const getCsrf = () => document.cookie.split('; ')
+        .find(c => c.startsWith('csrftoken='))?.split('=')[1];
+
+    document.querySelectorAll('.toggle-checkbox').forEach(cb => {
+        cb.addEventListener('change', async function () {
+            const taskId = this.dataset.taskId;
+            const row = document.querySelector(`tr[data-task-id="${taskId}"]`);
+            const titleSpan = row.querySelector('.task-title');
+
+            try {
+                const response = await fetch(`/tasks/${taskId}/toggle/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCsrf(),
+                    },
+                });
+                if (!response.ok) throw new Error('Request failed');
+                const data = await response.json();
+
+                // Update visual state without page reload
+                if (data.is_done) {
+                    row.classList.add('table-success');
+                    titleSpan.classList.add('text-decoration-line-through', 'text-muted');
+                } else {
+                    row.classList.remove('table-success');
+                    titleSpan.classList.remove('text-decoration-line-through', 'text-muted');
+                }
+            } catch (err) {
+                console.error(err);
+                this.checked = !this.checked;  // Revert on error
+                alert('Nie udało się zaktualizować zadania.');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
