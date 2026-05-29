@@ -6,6 +6,21 @@
     <a href="{% url 'task_create' %}" class="btn btn-success">+ Nowe zadanie</a>
 </div>
 
+<div class="btn-group mb-3" role="group">
+    <a href="?filter=all"
+       class="btn btn-outline-primary {% if current_filter == 'all' %}active{% endif %}">
+        Wszystkie
+    </a>
+    <a href="?filter=active"
+       class="btn btn-outline-primary {% if current_filter == 'active' %}active{% endif %}">
+        Aktywne
+    </a>
+    <a href="?filter=done"
+       class="btn btn-outline-primary {% if current_filter == 'done' %}active{% endif %}">
+        Wykonane
+    </a>
+</div>
+
 {% if tasks %}
     <div class="list-group">
         {% for task in tasks %}
@@ -14,11 +29,26 @@
                 <div>
                     <h5 class="mb-1 {% if task.is_done %}text-decoration-line-through{% endif %}">
                         {{ task.title }}
+                        {% if task.priority == 'H' %}
+                            <span class="badge bg-danger ms-2">Wysoki</span>
+                        {% elif task.priority == 'M' %}
+                            <span class="badge bg-warning text-dark ms-2">Średni</span>
+                        {% else %}
+                            <span class="badge bg-secondary ms-2">Niski</span>
+                        {% endif %}
+                        {% if task.is_overdue %}
+                            <span class="badge bg-dark ms-1">Przeterminowane</span>
+                        {% endif %}
                     </h5>
                     {% if task.description %}
                         <p class="mb-1 text-muted">{{ task.description }}</p>
                     {% endif %}
-                    <small class="text-muted">Utworzono: {{ task.created_at|date:"d.m.Y H:i" }}</small>
+                    <small class="text-muted">
+                        Utworzono: {{ task.created_at|date:"d.m.Y H:i" }}
+                        {% if task.due_date %}
+                            &nbsp;|&nbsp; Termin: <strong>{{ task.due_date|date:"d.m.Y" }}</strong>
+                        {% endif %}
+                    </small>
                 </div>
                 <div class="btn-group" role="group">
                     <a href="{% url 'task_toggle' task.pk %}" class="btn btn-sm btn-outline-primary">
@@ -31,6 +61,6 @@
         {% endfor %}
     </div>
 {% else %}
-    <div class="alert alert-info">Nie masz jeszcze żadnych zadań. Dodaj pierwsze!</div>
+    <div class="alert alert-info">Brak zadań do wyświetlenia.</div>
 {% endif %}
 {% endblock %}
